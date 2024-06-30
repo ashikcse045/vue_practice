@@ -1,13 +1,18 @@
 <script setup>
-  import { defineProps, defineEmits } from 'vue';
-  const {user} = defineProps({
+  import { defineProps } from 'vue';
+  const { user, currentComp } = defineProps({
     user: {
       type: String,
       required: true,
-    }
+    },
+    currentComp: {
+      type: String,
+      required: true,
+    },
   });
 
-  const emit = defineEmits(['changeUserName'])
+  const emit = defineEmits(['changeComponent']);
+
 </script>
 
 <template>
@@ -21,10 +26,10 @@
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="#">Home</a>
+            <a :class="{ 'nav-link': true, active: currentComp == 'posts' }" aria-current="page" href="#" @click="emit('changeComponent', 'posts')">Posts</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#">Link</a>
+            <a :class="{ 'nav-link': true, active: currentComp == 'createPost' }" href="#" @click="emit('changeComponent', 'createPost')">CreatePost</a>
           </li>
         </ul>
         <ul class="navbar-nav mb-2 mb-lg-0">
@@ -36,9 +41,6 @@
               <li><a class="dropdown-item" href="#">Profile</a></li>
               <li><a class="dropdown-item" href="#">Logout</a></li>
             </ul>
-          </li>
-          <li>
-            <button @click="emit('changeUserName', 'Lorem')">change user</button>
           </li>
         </ul>
       </div>

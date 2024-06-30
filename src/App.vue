@@ -1,9 +1,10 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, provide } from 'vue';
 import moment from 'moment';
 import Posts from './components/Posts.vue';
 import CreatePost from './components/CreatePost.vue';
 import NavItem from './components/NavItem.vue';
+import LayoutContent from './components/LayoutContent.vue';
 
 const posts = ref([
   {
@@ -12,7 +13,8 @@ const posts = ref([
     content: 'This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.',
     likes: 0,
     comments: [],
-    date: '2024-05-24 11:00:00'
+    date: '2024-05-24 11:00:00',
+    isCommentVisable: false,
   },
   {
     id: 2,
@@ -20,7 +22,8 @@ const posts = ref([
     content: 'This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.',
     likes: 0,
     comments: [],
-    date: '2024-05-24 11:00:00'
+    date: '2024-05-24 11:00:00',
+    isCommentVisable: false,
   },
   {
     id: 3,
@@ -28,14 +31,12 @@ const posts = ref([
     content: 'This is a wider card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.',
     likes: 0,
     comments: [],
-    date: '2024-05-24 11:00:00'
+    date: '2024-05-24 11:00:00',
+    isCommentVisable: false,
   }
 ]);
 
 const user = ref('Ashik Sarker');
-const changeUserName = (name) => {
-  user.value = name;
-}
 
 const increaseLike = i => {
   posts.value[i].likes += 1;
@@ -44,10 +45,6 @@ const deletePost = i => {
   posts.value.splice(i, 1);
 }
 
-const fromData = ref({
-  title: '',
-  content: '',
-})
 const emptyFromData = obj => {
   for (const key in obj) {
     obj[key] = '';
@@ -69,26 +66,27 @@ const checkValidity = obj => {
   };
 }
 
-const createPost = () => {
-  const isValid = checkValidity({ ...fromData.value });
+const createPost = (fromData) => {
+  console.log('this function called');
+  const isValid = checkValidity({ ...fromData });
   if (!isValid.result) {
     alert(isValid.message);
     return false;
   }
-  posts.value.push({
+  posts.value.push({ 
     id: posts.value.length + 1,
-    title: fromData.value.title,
-    content: fromData.value.content,
+    title: fromData.title,
+    content: fromData.content,
     likes: 0,
     comments: [],
     date: moment().format('YYYY-MM-DD HH:mm:ss'),
+    isCommentVisable: false,
   });
-  emptyFromData(fromData.value);
 }
 
-const commentData = ref({});
-const makeComment = i => {
-  const isValid = checkValidity({ comment: commentData.value[i] });
+const makeComment = (i, commentData) => {
+
+  const isValid = checkValidity({ comment: commentData });
   if (!isValid.result) {
     alert(isValid.message);
     return false;
@@ -106,9 +104,13 @@ const deleteComment = (i, commentIndex) => {
   posts.value[i].comments.splice(commentIndex, 1);
 }
 
-const isCommentVisable = ref({});
 const toggleCommentVisibility = i => {
-  isCommentVisable.value[i] = !isCommentVisable.value[i];
+  posts.value[i].isCommentVisable = !posts.value[i].isCommentVisable;
+}
+
+const currentComponent = ref('posts');
+const changeComponent = component => {
+  currentComponent.value = component;
 }
 
 watch(() => posts.value.length,
@@ -130,23 +132,21 @@ watch(() => posts.value, () => {
     }
   })
 }, { deep: true })
+
+provide('posts', posts)
 </script>
 
 <template>
-
-  <NavItem :user="user" @changeUserName="changeUserName" />
-  <CreatePost :fromData="fromData" @createPost="createPost" />
-  <Posts 
-    :posts="posts" 
-    :isCommentVisable="isCommentVisable" 
-    :commentData="commentData"
-    @increaseLike="increaseLike" 
-    @deletePost="deletePost"
-    @toggleCommentVisibility="toggleCommentVisibility"
-    @makeComment="makeComment"
-    @deleteComment="deleteComment"
-  />
-
+  <LayoutContent :user="user" @changeComponent="changeComponent" :currentComp="currentComponent">
+    <CreatePost v-if="currentComponent == 'createPost'" @createPost="createPost" />
+    <Posts v-if="currentComponent == 'posts'"
+      @increaseLike="increaseLike" 
+      @deletePost="deletePost"
+      @toggleCommentVisibility="toggleCommentVisibility"
+      @makeComment="makeComment"
+      @deleteComment="deleteComment"
+    />
+  </LayoutContent>
 </template>
 
 <style scoped>
