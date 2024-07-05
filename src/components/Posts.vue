@@ -1,15 +1,15 @@
 <script setup>
-import { defineProps, defineEmits, computed, ref } from 'vue';
+import { defineProps, defineEmits, computed, ref, inject, onBeforeMount, onMounted, onBeforeUnmount, onUnmounted } from 'vue';
 import moment from 'moment';
 import Comments from './Comments.vue';
-const { posts, isCommentVisable, commentData } = defineProps([
-  'posts',
+const { isCommentVisable } = defineProps([
   'isCommentVisable',
-  'commentData'
 ]);
 
+const posts = inject('posts')
+
 const reversedPosts = computed(() => {
-  return [...posts].reverse();
+  return [...posts.value].reverse();
 })
 
 const emit = defineEmits([
@@ -21,11 +21,31 @@ const emit = defineEmits([
 ]);
 
 const makeComment = index => {
-  emit('makeComment', index);
+  emit('makeComment', index, commentData);
 }
 const deleteComment = (index, commentIndex) => {
   emit('deleteComment', index, commentIndex);
 }
+
+const commentData = ref({});
+
+
+// VUE lifecycle methods
+onBeforeMount( () => {
+  console.log('posts: before mount');
+} );
+
+onMounted(() => {
+  console.log('posts: mounted');
+});
+
+onBeforeUnmount(() => {
+  console.log('posts: before unmounted');
+});
+
+onUnmounted(() => {
+  console.log('posts: unmounted')
+})
 
 </script>
 
@@ -44,12 +64,13 @@ const deleteComment = (index, commentIndex) => {
               <h6 class="card-subtitle mb-2 text-body-secondary">{{ moment(post.date).fromNow() }}</h6>
               <p class="card-text">{{ post.content }}</p>
               <p class="card-text">
-                <span :style="{color: post.likes >= 10 ? 'green' : ''}">
+                <span :style="{ color: post.likes >= 10 ? 'green' : '' }">
                   <small v-if="post.likes === 0">No likes</small>
                   <small v-else-if="post.likes === 1">{{ post.likes }} like</small>
                   <small v-else>{{ post.likes }} likes</small>,
                 </span>
-                <span class="cursor-pointer" @click="emit('toggleCommentVisibility', i)" :style="{color: post.comments.length >= 3 ? 'green' : ''}">
+                <span class="cursor-pointer" @click="emit('toggleCommentVisibility', reversedPosts.length - (i + 1))"
+                  :style="{ color: post.comments.length >= 3 ? 'green' : '' }">
                   <small v-if="post.comments.length > 1">{{
           post.comments.length }} comments</small>
                   <small v-else-if="post.comments.length < 1">No comments</small>
@@ -57,13 +78,13 @@ const deleteComment = (index, commentIndex) => {
                     comment</small>
                 </span>
               </p>
-              <Comments :isCommentVisable="isCommentVisable" :index="i" :mainIndex="reversedPosts.length - (i + 1)"
-                :comments="post.comments" :commentData="commentData" @makeComment="makeComment"
-                @deleteComment="deleteComment" />
+              <Comments :index="i" :mainIndex="reversedPosts.length - (i + 1)"
+                @makeComment="makeComment" @deleteComment="deleteComment"
+                v-model="commentData[reversedPosts.length - (i + 1)]" />
               <button class="btn btn-sm btn-primary"
                 @click="emit('increaseLike', reversedPosts.length - (i + 1))">Like</button>
-              <button class="btn btn-sm btn-danger float-end" @click="emit('deletePost', reversedPosts.length - (i + 1))"><i
-                  class="bi bi-trash"></i></button>
+              <button class="btn btn-sm btn-danger float-end"
+                @click="emit('deletePost', reversedPosts.length - (i + 1))"><i class="bi bi-trash"></i></button>
             </div>
           </div>
         </div>
